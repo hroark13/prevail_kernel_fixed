@@ -1,0 +1,44 @@
+You need a Linux System, I use Ubuntu 11.4 64 bit
+
+1. Download hpkf.tar.gz File
+
+hpkf.tar.gz
+
+2. Extract file to your home/user folder, you should now have a /home/user/hpkf folder
+
+3. Open Terminal
+
+4. MAKE YOUR zImage
+
+$ cd hpkf/kernel
+$ make clean
+$ make mrproper
+$ cp prevailconfig .config
+$ make
+
+Compile will take a little while, when it is done the zImage will be in
+
+/home/user/hpkf/kernel/arch/arm/boot/
+
+
+
+5. PACK zImage with a ramdisk (BOOT or RECOERY)
+
+Make CM7 Beta 5 Kernel (BOOT) Flashable with ClockWorkMOD
+$ cd ../pack
+$ ./cwmboot.pl cmbeta5
+
+Make Kouma 1.3 Kernel (BOOT) Flashable with Odin
+$ cd ../pack
+$ ./odinboot.pl kouma13
+
+Make ClockWorkMOD 5.0.2.7 (RECOERY) Flashable with ClockWorkMOD
+$ cd ../pack
+$ ./cwmrecov.pl CWM5027
+
+Make ClockWorkMOD 5.0.2.7 (RECOERY) Flashable with Odin
+$ cd ../pack
+$ ./odinrecov.pl CWM5027
+
+Either a ZIP or a TAR file will be located in the /home/user/hpkf/pack folder depending on what you chose to make
+

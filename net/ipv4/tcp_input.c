@@ -74,13 +74,7 @@
 #include <net/netdma.h>
 
 int sysctl_tcp_timestamps __read_mostly = 1;
-
-#if defined(CONFIG_MACH_GIO)
-int sysctl_tcp_window_scaling __read_mostly = 0;
-#else
 int sysctl_tcp_window_scaling __read_mostly = 1;
-#endif
-
 int sysctl_tcp_sack __read_mostly = 1;
 int sysctl_tcp_fack __read_mostly = 1;
 int sysctl_tcp_reordering __read_mostly = TCP_FASTRETRANS_THRESH;
