@@ -59,13 +59,9 @@ struct smb328a_platform_data {
 #define SMB328A_AUTOMATIC_INPUT_CURRENT_LIMMIT_STATUS	0x39
 
 /* Set Value define */
-#if defined(CONFIG_MACH_ESCAPE)
+
 #define SMB328A_INPUT_AND_CHARGE_CURRENTS_SET_VAULE	0x9E	/* 900mA */
-#elif defined(CONFIG_MACH_GIO)
-#define SMB328A_INPUT_AND_CHARGE_CURRENTS_SET_VAULE	0x5E	/* 700mA */
-#else
-#define SMB328A_INPUT_AND_CHARGE_CURRENTS_SET_VAULE	0x9E	/* 900mA */
-#endif
+
 
 enum {
 	BAT_NOT_DETECTED,
@@ -684,67 +680,7 @@ static int smb328a_set_charging_current(struct i2c_client *client, int chg_curre
 			__func__, SMB328A_COMMAND);
 		return -1;
 	}
-#if defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_GIO)
-	if (chg_current == 450) {
-		input |= (0x0 << 5); /* 450mA disable, at auto-limit case */
-		output |= (0x0 << 5); /* 500mA */
-		ac_usb |= (0x1 << 2); //AC Mode
-		
-		if (smb328a_write_reg(client, SMB328A_CURRENT_TERMINATION, input) < 0) {
-			printk("%s : 450 error(1)!\n", __func__);
-			return -1;
-		}
-		if (smb328a_write_reg(client, SMB328A_INPUT_AND_CHARGE_CURRENTS, output) < 0) {
-			printk("%s : 450 error(2)!\n", __func__);
-			return -1;
-		}
-		
-		if (smb328a_write_reg(client, SMB328A_COMMAND, ac_usb) < 0) {
-			printk("%s : 450 set ac_usb error error!\n", __func__);
-			return -1;
-		}
-	} else if (chg_current == 900) {
 
-#if defined(CONFIG_MACH_ESCAPE)
-		if(hw_version >= 4){
-			input |= (0x4 << 5); /* 900mA disable, at auto-limit case */
-			output |= (0x4 << 5); /* 900mA */
-		}else{
-			input |= (0x4 << 5); /* 900mA disable, at auto-limit case */
-			output |= (0x3 << 5); /* 800mA */
-		}
-#elif defined(CONFIG_MACH_GIO)
-		input |= (0x2 << 5); /* 700mA */
-		output |= (0x2 << 5); /* 700mA */
-#endif
-		ac_usb |= (0x1 << 2);
-
-		//disable, at auto-limit case
-		if (smb328a_write_reg(client, SMB328A_CURRENT_TERMINATION, input) < 0) {
-			printk("%s : 600 error!(1)\n", __func__);
-			return -1;
-		}
-		if (smb328a_write_reg(client, SMB328A_INPUT_AND_CHARGE_CURRENTS, output) < 0) {
-			printk("%s : 600 error!(2)\n", __func__);
-			return -1;
-		}
-		
-		if (smb328a_write_reg(client, SMB328A_COMMAND, ac_usb) < 0) {
-			printk("%s : 600 set ac_usb error!\n", __func__);
-			return -1;
-		}
-	} else {
-		printk("%s : error! invalid setting current\n", __func__);
-		return -1;
-	}
-
-	val = smb328a_read_reg(client, SMB328A_COMMAND);
-	if (val >= 0) {
-		data = (u8)val;
-		printk("%s : reg (0x%x) = 0x%x\n", __func__, SMB328A_COMMAND, data);
-	}	
-	
-#endif
 	if (chg_current == 450) {
 		chip->chg_mode = CHG_MODE_USB;
 	} else if (chg_current == 900) {
@@ -847,11 +783,8 @@ static int smb328a_enable_charging(struct i2c_client *client)
 		if (chip->chg_mode == CHG_MODE_AC)
 			data = 0x8c;
 		else if (chip->chg_mode == CHG_MODE_USB){
-#if defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_GIO)
-			data = 0x8c; //set AC Mode for 450mA limit
-#else
+
 			data = 0x88;
-#endif
 		}else
 			data = 0x98;
 		if (smb328a_write_reg(client, SMB328A_COMMAND, data) < 0) {
@@ -1074,13 +1007,6 @@ static struct i2c_driver smb328a_i2c_driver = {
 static int __init smb328a_init(void)
 {
    printk(KERN_ERR "[SMB328a][%s]\n", __func__);
-#if defined(CONFIG_MACH_ESCAPE)
-    if (hw_version < 2)
-        return -ENODEV ;
-#elif defined(CONFIG_MACH_GIO)
-    if (hw_version < 3)
-        return -ENODEV ;	
-#endif
    return i2c_add_driver(&smb328a_i2c_driver);
 }
 module_init(smb328a_init);
@@ -1088,13 +1014,7 @@ module_init(smb328a_init);
 static void __exit smb328a_exit(void)
 {
     printk(KERN_ERR "[SMB328a][%s]\n", __func__);
-#if defined(CONFIG_MACH_ESCAPE)
-    if (hw_version < 2)
-        return -ENODEV ;
-#elif defined(CONFIG_MACH_GIO)
-    if (hw_version < 3)
-        return -ENODEV ;		
-#endif
+
    	i2c_del_driver(&smb328a_i2c_driver);
 }
 module_exit(smb328a_exit);

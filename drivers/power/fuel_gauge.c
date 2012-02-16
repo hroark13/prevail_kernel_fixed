@@ -23,18 +23,13 @@
 #define CMD0_REG			0xFE
 #define CMD1_REG			0xFF
 
-#if defined(CONFIG_MACH_ROOKIE) || defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO) || defined(CONFIG_MACH_GIOS)
+
 #define ALERT_THRESHOLD_VALUE_01 0x1E // 1% alert
 #define ALERT_THRESHOLD_VALUE_05 0x1A // 5% alert
 #define ALERT_THRESHOLD_VALUE_15 0x10 // 15% alert
-#endif
-#if defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO) || defined(CONFIG_MACH_REALITY2) || defined(CONFIG_MACH_GIOS)
 #define I2C_2_SDA 110
 #define I2C_2_SCL 109
-#elif defined(CONFIG_MACH_ROOKIE) || defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_GIO)
-#define I2C_2_SDA 32
-#define I2C_2_SCL 31
-#endif
+
 
 //#define __ADVANCED_SOC_VALUE__
 #define SOC_LB_FOR_POWER_OFF	27	// hanapark_Victory
@@ -60,7 +55,6 @@ struct fuel_gauge_data
 	struct work_struct work;
 };
 
-#if defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO) || defined(CONFIG_MACH_GIOS)
 static struct determin_table_change_battery {
 	u32 max_adc;
 	u32 min_adc;
@@ -78,24 +72,6 @@ static struct determin_table_change_battery {
 	 { 354850000, 347780000, 342568757, 5252476},
 	 { 347780000, 339960000, 339961760, 7910562},
 };
-#else
-static struct determin_table_change_battery {
-	u32 max_adc;
-	u32 min_adc;
-	u32 y_interception;
-	u32 slope;
-} max17043_table[9] = {
-	 { 413000000, 407190000, 159620724, 2501954},
-	 { 407190000, 390960000, 315660949,  925109},
-	 { 390960000, 376500000, 344074741,  576005},
-	 { 376500000, 370510000, 358577878,  318378},
-	 { 370510000, 366420000, 362383415,  216797},
-	 { 366420000, 362230000, 353953600,  669305},
-	 { 362230000, 358670000, 356615963,  453803},
-	 { 358670000, 353170000, 348740485, 2205455},
-	 { 353170000, 340000000, 339997900, 6591952},
-};
-#endif
 
 static int fg_i2c_read(struct i2c_client *client, u8 reg, u8 *data)
 {
@@ -166,7 +142,6 @@ unsigned int fg_read_vcell(void)
 	return vcell;
 }
 
-#if defined(CONFIG_MACH_ROOKIE) || defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_GIO) || defined (CONFIG_MACH_RANT3) || defined (CONFIG_MACH_VINO) || defined (CONFIG_MACH_GIOS)
 void Is_Interrupt(void)
 {
 	struct i2c_client *client = fg_i2c_client;	
@@ -184,28 +159,9 @@ void Is_Interrupt(void)
 	if(data[0] == 1)
 	{
 		printk("interrupt accured ============= > OK\n");
-#if defined (CONFIG_MACH_VINO) || defined(CONFIG_MACH_GIOS)
 		rst_cmd[0] = 0xB7;
 		rst_cmd[1] = 0x1C;
-#elif defined(CONFIG_MACH_ROOKIE)
-		if(hw_version >= 7){
-			rst_cmd[0] = 0xC0; // REV07 FF ->C0 //MBksjung 2011.05.25: HW Request C0->FF
-			rst_cmd[1] = 0x1C;
-		}
-		else{
-			rst_cmd[0] = 0xFF; // REV06
-			rst_cmd[1] = 0x1C;			
-		}
-#elif defined(CONFIG_MACH_ESCAPE) || defined (CONFIG_MACH_RANT3)
-		rst_cmd[0] = 0xC0;
-		rst_cmd[1] = 0x1C;				
-#elif defined(CONFIG_MACH_GIO)		
-		rst_cmd[0] = 0xD0;	// 0xA0
-		rst_cmd[1] = 0x1F;
-#else
-		rst_cmd[0] = 0x97;
-		rst_cmd[1] = 0x1C;
-#endif
+
 		
 		pr_info("%s: Write RCOMP = 0x%x%x\n", __func__, rst_cmd[0], rst_cmd[1]);
 	
@@ -218,7 +174,7 @@ void Is_Interrupt(void)
 		fg_alert = 0;
 	}
 }
-#endif
+
 unsigned int fg_read_soc(void)
 {
 	struct i2c_client *client = fg_i2c_client;
@@ -247,22 +203,13 @@ unsigned int fg_read_soc(void)
 		{
 #if 1 // MBjdyoo 2011.03.14 : Value of FUEL GAUGE is returned different SOC value when voltage is 4.2/3.7V.
 
-#if defined(CONFIG_MACH_ROOKIE) || defined(CONFIG_MACH_ESCAPE)
-			adj_soc = (((data[0]*100 + (data[1]>>6)*25 ) - 45) * 100) / (9480 - 45);
-#elif defined(CONFIG_MACH_GIO)
-			adj_soc = (((data[0]*10 + (data[1]>>7)*5 ) - 4) * 100) / (970 - 4);
-#else
 			adj_soc = (((data[0]*10 + (data[1]>>7)*5 ) - 14) * 100) / (948 - 14); 
-#endif			
-
+		
 #ifdef __FUEL_GAUGE_DEBUG__			
 			printk(KERN_CRIT "[[[[[[[[[[[[[[[[[[[[[FUEL GUAGE]]]]]]]]]]]]]]]]]]] \n");
-            		printk(KERN_CRIT "[Battery_Fuel_Gauge] %s : data[0]  : %d data[1]: %d\n", __func__, data[0], data[1]);
-		#if defined(CONFIG_MACH_GIO)
-			printk(KERN_CRIT "[Battery_Fuel_Gauge] %s : Real SOC : %d \n", __func__, (data[0]*10 + (data[1]>>7)*5));
-		#else
+            printk(KERN_CRIT "[Battery_Fuel_Gauge] %s : data[0]  : %d data[1]: %d\n", __func__, data[0], data[1]);
 			printk(KERN_CRIT "[Battery_Fuel_Gauge] %s : Real SOC : %d \n", __func__, (data[0]*100 + (data[1]>>6)*25 )/10 );
-		#endif
+
 			printk(KERN_CRIT "[Battery_Fuel_Gauge] %s : adj_SOC : %d \n", __func__, adj_soc );	
 #endif //__FUEL_GAUGE_DEBUG__				
 #ifdef __BATT_SOC_TEST_LOG__
@@ -292,9 +239,7 @@ gRealsoc = (data[0]*100 + (data[1]>>6)*25 )/10;
 		}
 		else 
 		{
-#if !defined(CONFIG_MACH_ROOKIE)
-			return 0;
-#else
+
 			if (data[1] > SOC_LB_FOR_POWER_OFF)
 			{
 #ifdef __FUEL_GAUGE_DEBUG__			
@@ -309,7 +254,6 @@ gRealsoc = (data[0]*100 + (data[1]>>6)*25 )/10;
 #endif //__FUEL_GAUGE_DEBUG__
 				return 0;
 		}
-#endif
 		}
 	}
 }
@@ -473,10 +417,8 @@ static int fuel_gauge_probe(struct i2c_client *client, const struct i2c_device_i
 	struct fuel_gauge_data *mt;
 	int err = -1;
 
-#if defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO) || defined(CONFIG_MACH_REALITY2) || defined(CONFIG_MACH_ROOKIE) || defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_GIO)|| defined(CONFIG_MACH_GIOS)
 	gpio_tlmm_config(GPIO_CFG(I2C_2_SDA , 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP,GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	gpio_tlmm_config(GPIO_CFG(I2C_2_SCL , 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP,GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-#endif
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
 	{

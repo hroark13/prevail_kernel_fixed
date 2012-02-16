@@ -34,113 +34,10 @@
 static char klog_buf[256];
 //}} pass platform log to kernel -1/3
 
-//{{ Add GAForensicHELP - 1/2
 
 #include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
-
-extern struct GAForensicINFO GAFINFO;   // GAFINFO structure defined at sched.h file
-
-
-// define GAFHELP structure
-static struct GAForensicHELP{
-  unsigned int real_pc_from_context_sp;
-  unsigned int task_struct_of_gaf_proc;
-  unsigned int thread_info_of_gaf_proc;
-  unsigned int cpu_context_of_gaf_proc;
-}GAFHELP;
-
-// g_gaf_mutex : declare mutex for synchronization - but why?
-DECLARE_MUTEX(g_gaf_mutex);
-
-int gaf_proc(void* data)
-{
-  volatile int stack[2];
-
-  stack[0] = (int)('_fag');
-  stack[1] = (int)('corp');
-  
-  // Attempts to acquire the semaphore.  If no more tasks are allowed to
-  // acquire the semaphore, calling this function will put the task to sleep.
-  // If the sleep is interrupted by a signal, this function will return -EINTR.
-  // If the semaphore is successfully acquired, this function returns 0.
-  // kernel/kernel/semaphore.c
-  down_interruptible(&g_gaf_mutex);
-  return 1;
-}
-
-// this module is executed by logger_init (that's start point!)
-void gaf_helper(void)
-{
-  unsigned int *ptr_task_struct;
-  unsigned int *ptr_thread_info;
-  unsigned int *ptr_cpu_cntx;
-  unsigned int ptr_sp, context_sp;
-  
-  // 
-  unsigned int fn_down_interruptible = (unsigned int)down_interruptible;
-  unsigned int fn_down = (unsigned int)down;
-  
-  
-  down_interruptible(&g_gaf_mutex);
-  ptr_task_struct = kthread_create(gaf_proc, NULL, "gaf-proc");
-  wake_up_process(ptr_task_struct);
-  msleep(100);
-  
-  // 
-  ptr_thread_info = *(unsigned int*)((unsigned int)ptr_task_struct + GAFINFO.task_struct_struct_stack);
-  ptr_cpu_cntx = (unsigned int)ptr_thread_info + GAFINFO.thread_info_struct_cpu_context;
-  
-  //
-  GAFHELP.task_struct_of_gaf_proc = ptr_task_struct;
-  GAFHELP.thread_info_of_gaf_proc = ptr_thread_info;
-  GAFHELP.cpu_context_of_gaf_proc = ptr_cpu_cntx;
-  
-  printk(KERN_INFO, "\n========== kernel thread : gaf-proc ==========\n");
-  printk(KERN_INFO, "task_struct at %x\n", ptr_task_struct);
-  printk(KERN_INFO, "thread_info at %x\n\n", ptr_thread_info);
-  
-  printk(KERN_INFO, "saved_cpu_context at %x\n", ptr_cpu_cntx);
-  printk(KERN_INFO, "%08x r4 :%08x r5 :%08x r6 :%08x r7 :%08x\n", ((unsigned int)ptr_cpu_cntx + 0x00),
-      *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x00), *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x04), *(unsigned int*)((unsigned int)
-      ptr_cpu_cntx + 0x08), *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x0c));
-  printk(KERN_INFO, "%08x r8 :%08x r9 :%08x r10:%08x r11:%08x\n", ((unsigned int)ptr_cpu_cntx + 0x10),
-      *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x10), *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x14), *(unsigned int*)((unsigned int)
-      ptr_cpu_cntx + 0x18), *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x1c));
-  printk(KERN_INFO, "%08x sp :%08x pc :%08x \n\n", ((unsigned int)ptr_cpu_cntx + 0x20),
-      *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x20), *(unsigned int*)((unsigned int)ptr_cpu_cntx + 0x24));
-  ptr_sp = context_sp = *(unsigned int*)((unsigned int)ptr_cpu_cntx + GAFINFO.cpu_context_save_struct_sp);
-  
-  printk(KERN_INFO, "searching saved pc which is stopped in down_interruptible() from %08x to %08x\n", ptr_sp, (unsigned int)ptr_thread_info + THREAD_SIZE);
-  printk(KERN_INFO, "down_interruptible() is from %08x to %08x\n\n", fn_down_interruptible, fn_down);
-  
-  while(ptr_sp < (unsigned int)ptr_thread_info + THREAD_SIZE) {
-    //printk(KERN_INFO "%08x at %08x\n", *(unsigned int*)ptr_sp, ptr_sp);
-    if( fn_down_interruptible <= *(unsigned int*)ptr_sp && *(unsigned int*)ptr_sp < fn_down ) {
-      printk(KERN_INFO, "pc (%08x) is found at %08x\n", *(unsigned int*)ptr_sp, ptr_sp);
-      break;
-    }
-    ptr_sp += 4;
-  }
-  
-  if(ptr_sp < (unsigned int)ptr_thread_info + THREAD_SIZE ) {
-  GAFHELP.real_pc_from_context_sp = ptr_sp -context_sp;
-  printk(KERN_INFO, "%08x r4 :xxxxxxxx r5 :%08x r6 :%08x r7 :%08x\n", (ptr_sp -0x2c),
-      *(unsigned int*)(ptr_sp -0x28), *(unsigned int*)(ptr_sp -0x24), *(unsigned int*)(ptr_sp -0x20));
-  printk(KERN_INFO, "%08x r8 :%08x r9 :%08x r10:%08x r11:%08x\n", (ptr_sp -0x1c),
-      *(unsigned int*)(ptr_sp -0x1c), *(unsigned int*)(ptr_sp -0x18), *(unsigned int*)(ptr_sp -0x14), *(unsigned int*)(ptr_sp -0x10));
-  printk(KERN_INFO, "%08x r12:%08x sp :%08x lr :%08x pc :%08x\n", (ptr_sp -0x0c),
-      *(unsigned int*)(ptr_sp -0x0c), *(unsigned int*)(ptr_sp -0x08), *(unsigned int*)(ptr_sp -0x04), *(unsigned int*)(ptr_sp -0x00));
-  } else {
-    GAFHELP.real_pc_from_context_sp = 0xFFFFFFFF;
-    printk(KERN_INFO, "pc is not found\n");
-  }
-  printk(KERN_INFO, "===================\n\n");
-}
-
-//}} Add GAForensicHELP - 1/2
-
 
 
 
@@ -831,9 +728,6 @@ static int __init logger_init(void)
 {
 	int ret;
 	
-	//{{ Add GAForensicHELP - 2/2
-  gaf_helper();
-  //}} Add GAForensicHELP - 2/2
 
 	/* Mark for GetLog */
 	plat_log_mark.p_main   = _buf_log_main+0x03000000;
@@ -841,19 +735,9 @@ static int __init logger_init(void)
 	plat_log_mark.p_events = _buf_log_events+0x03000000;
 	plat_log_mark.p_system = _buf_log_system+0x03000000;
 	marks_ver_mark.log_mark_version = 1;
-#if defined(CONFIG_MACH_VINO) || defined(CONFIG_MACH_GIOS)
 	if ((hw_version >= 7)||(hw_version == 90)) {
 		marks_ver_mark.first_size = (256+128)*1024*1024;
 	}
-#elif defined(CONFIG_MACH_RANT3)
-	if (hw_version >= 4) {
-		marks_ver_mark.first_size = (256+256)*1024*1024;
-	}
-#else
-	if (hw_version > 0) {
-		marks_ver_mark.first_size = (256+128)*1024*1024;
-	}
-#endif
 	printk(KERN_INFO "logger(%s):hw_version=%d\n",__func__,hw_version);
 
 	ret = init_log(&log_main);

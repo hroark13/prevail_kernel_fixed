@@ -48,17 +48,6 @@
 #include "lcdc_s6d_backlight.h"
 #include "msm_fb.h"
 
-/* Panel Type */
-//#define PANEL_SHARP_VA		0x511810
-//#define PANEL_GP_TN			0x61ad10
-
-//extern unsigned int lcd_panel_type;
-//extern int lcd_type;
-#if defined(CONFIG_MACH_GIO)
-extern unsigned char hw_version;
-#define LCD_GIO_HW_REV ((hw_version >= 4) ?(1):(0))
-#endif
-
 int lcd_type = 1;
 static int lcd_brightness = -1;
 

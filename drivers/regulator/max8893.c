@@ -26,17 +26,11 @@
 #include <linux/regulator/driver.h>
 #include <linux/regulator/max8893.h>
 #include <linux/mutex.h>
-
-//#include <plat/regs-gpio.h>
-//#include <plat/gpio-cfg.h>
 #include <mach/hardware.h>
 #include <mach/gpio.h>
-//#include <asm/gpio.h>
-//#define DBG(fmt...)
 #define DBG(fmt...) printk( fmt)
 
-//Thomas Ryu 20100313
-//#define WIMAX_I2C_CON  S5PC11X_GPC0(3)
+
 
 #if 1//CONFIG_VICTORY_VER_B1... pfe
 
@@ -51,8 +45,7 @@
 #define MAX8893_REG_LDO3	0x07
 #define MAX8893_REG_LDO4	0x08
 #define MAX8893_REG_LDO5	0x09
-//#define MAX8998_REG_SVER	0x46
-//#define MAX8998_REG_NREV	0x47
+
 
 struct max8893_data {
 	struct i2c_client	*client;
@@ -326,9 +319,6 @@ static int max8893_ldo_set_voltage(struct regulator_dev *rdev,
 		reg  = MAX8893_REG_BUCK;
 	}
 
-//	value = max8893_read_reg(max8893, reg);
-//	value &= ~mask;
-//	value |= (i << shift);
 	max8893_write_reg(max8893, value, reg);
 
 	return 0;
@@ -573,10 +563,7 @@ static int __devinit max8893_pmic_probe(struct i2c_client *client,
     //EBUK:1, ELS:X,ELDO1:0,ELDO2:X,ELDO3:X,ELDO4:0,,ELDO5:0,EUSB:X
    // onoff_reg_val &= 0xC9;//0x59; //01011001;
    
-#ifdef CONFIG_WIMAX	// yongha woo 20100503 
-	//EBUK:0, ELS:X,ELDO1:0,ELDO2:0, ELDO3:0, ELDO4:0, ELDO5:0, EUSB:X
-	onoff_reg_val &= 0x41; // 0100 0001 
-#endif
+
        max8893_i2c_write(client, MAX8893_REG_ONOFF, onoff_reg_val);	
        max8893_i2c_read(client, MAX8893_REG_ONOFF, (u8 *) &ret);
 
@@ -636,9 +623,7 @@ static int __init max8893_pmic_init(void)
 {
 	gpio_tlmm_config(GPIO_CFG(110 /*AP_SUBPMIC_SCL*/ , 0, GPIO_OUTPUT, GPIO_PULL_UP,GPIO_2MA), GPIO_ENABLE);
     gpio_tlmm_config(GPIO_CFG(109 /*AP_SUBPMIC_SDA*/ , 0, GPIO_OUTPUT, GPIO_PULL_UP,GPIO_2MA), GPIO_ENABLE);
-    //gpio_tlmm_config(GPIO_CFG(96 /*USB_SW_EN_WIMAX*/, 0, GPIO_INPUT, GPIO_PULL_UP,GPIO_2MA), GPIO_ENABLE);
-	//gpio_tlmm_config(GPIO_CFG(81 /*WIMAX_PWR_EN*/, 0, GPIO_INPUT, GPIO_PULL_UP,GPIO_2MA), GPIO_ENABLE);	
-	return i2c_add_driver(&max8893_pmic_driver);
+		return i2c_add_driver(&max8893_pmic_driver);
 }
 subsys_initcall(max8893_pmic_init);
 
