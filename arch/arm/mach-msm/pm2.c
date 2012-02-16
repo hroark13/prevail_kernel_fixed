@@ -1852,12 +1852,20 @@ static int msm_reboot_call
 			restart_reason = 0x776655EF;
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned code = simple_strtoul(cmd + 4, 0, 16) & 0xff;
-			restart_reason = 0x6f656d00 | code;
-		} else {
-			restart_reason = 0x77665501;
-		}
-	}
-	return NOTIFY_DONE;
+       restart_reason = 0x6f656d00 | code;
+
+     } else {
+#if defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_ROOKIE)  || defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO)|| defined(CONFIG_MACH_GIOS)
+      set_recovery_mode_done();
+#endif
+       restart_reason = 0x77665501;
+     }
+  } else {
+#if defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_ROOKIE)  || defined(CONFIG_MACH_ESCAPE) || defined(CONFIG_MACH_RANT3) || defined(CONFIG_MACH_VINO)|| defined(CONFIG_MACH_GIOS)
+    set_recovery_mode_done();
+#endif
+   }
+   return NOTIFY_DONE;
 }
 
 static struct notifier_block msm_reboot_notifier = {

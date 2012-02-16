@@ -337,6 +337,8 @@ void cytouch_release_all(void)
 			input_report_abs(ts_global->input_dev, ABS_MT_POSITION_Y, ts_global->id_stat[i].y);
 			input_report_abs(ts_global->input_dev, ABS_MT_WIDTH_MAJOR, ts_global->id_stat[i].z);
 			input_report_abs(ts_global->input_dev, ABS_MT_TOUCH_MAJOR, 0);
+			input_report_abs(ts_global->input_dev, ABS_PRESSURE, 0);
+			input_report_key(ts_global->input_dev, BTN_TOUCH, 0);
 			ts_global->id_stat[i].status = CYTOUCH_ID_STAT_RELEASED;
 		}
 
@@ -432,6 +434,8 @@ void cytouch_touch_timer_body(struct work_struct* p_work)
         input_report_abs(ts_global->input_dev, ABS_MT_POSITION_Y, ts_global->id_stat[i].y);
         input_report_abs(ts_global->input_dev, ABS_MT_WIDTH_MAJOR, ts_global->id_stat[i].z);
         input_report_abs(ts_global->input_dev, ABS_MT_TOUCH_MAJOR, 0);
+		input_report_abs(ts_global->input_dev, ABS_PRESSURE, 0);
+		input_report_key(ts_global->input_dev, BTN_TOUCH, 0);
         ts_global->id_stat[i].status = CYTOUCH_ID_STAT_RELEASED;
         pr_debug("%s : lost TOUCH UP generated!\n", __func__);
         tsp_sync_event = 1;
@@ -916,6 +920,8 @@ void cytouch_irq_body(struct work_struct* p_work)
 					input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, ts->id_stat[i].y);
 					input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, ts->id_stat[i].z);
 					input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 10);
+					input_report_abs(ts->input_dev, ABS_PRESSURE, 255);
+					input_report_key(ts_global->input_dev, BTN_TOUCH, 1);
 					input_mt_sync(ts->input_dev);
 				}
 				b_add_touch_timer = TRUE;	/* to prevent unprocessed UP event */
@@ -927,6 +933,8 @@ void cytouch_irq_body(struct work_struct* p_work)
 				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, ts->id_stat[i].y);
 				input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, ts->id_stat[i].z);
 				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);
+				input_report_abs(ts->input_dev, ABS_PRESSURE, 0);
+				input_report_key(ts_global->input_dev, BTN_TOUCH, 0);
 				ts->id_stat[i].status = CYTOUCH_ID_STAT_RELEASED;
 				input_mt_sync(ts->input_dev);
 			}
@@ -999,6 +1007,8 @@ void cytouch_irq_body(struct work_struct* p_work)
 				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, ts->id_stat[i].y);
 				input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, ts->id_stat[i].z);
 				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);
+				input_report_abs(ts->input_dev, ABS_PRESSURE, 0);
+				input_report_key(ts_global->input_dev, BTN_TOUCH, 0);
 				ts->id_stat[i].status = CYTOUCH_ID_STAT_RELEASED;
 				pr_debug("%s : lost TOUCH UP generated!\n", __func__);
 			}
@@ -1071,6 +1081,8 @@ void cytouch_irq_body(struct work_struct* p_work)
 					input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, ts->id_stat[i].y);
 					input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, ts->id_stat[i].z);
 					input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 10);
+					input_report_abs(ts->input_dev, ABS_PRESSURE, 255);
+					input_report_key(ts_global->input_dev, BTN_TOUCH, 1);
 					input_mt_sync(ts->input_dev);
 				}
 				b_add_touch_timer = TRUE;	/* to prevent unprocessed UP event */
@@ -1082,6 +1094,8 @@ void cytouch_irq_body(struct work_struct* p_work)
 				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, ts->id_stat[i].y);
 				input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, ts->id_stat[i].z);
 				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);
+				input_report_abs(ts->input_dev, ABS_PRESSURE, 0);
+				input_report_key(ts_global->input_dev, BTN_TOUCH, 0);
 				ts->id_stat[i].status = CYTOUCH_ID_STAT_RELEASED;
 				input_mt_sync(ts->input_dev);
 			}
@@ -1718,7 +1732,7 @@ static int cytouch_probe(struct i2c_client* p_client, const struct i2c_device_id
 
   input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
   input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
-
+  input_set_abs_params(ts->input_dev, ABS_PRESSURE, 0, 255, 0, 0);
   ts->input_dev->keycode = cytouch_keycodes;
 
   /* set up two keys (menu & back) */

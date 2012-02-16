@@ -176,7 +176,7 @@ struct pdp_info {
 	union {
 		/* Virtual serial interface */
 		struct {
-			struct tty_driver	tty_driver[NUM_PDP_CONTEXT];	// CSD, CDMA, TRFB, CIQ
+			struct tty_driver	tty_driver[NUM_PDP_CONTEXT];	// CSD, CDMA, TRFB
 			int			refcount;
 			struct tty_struct	*tty_table[1];
 			struct ktermios		*termios[1];
@@ -3170,9 +3170,7 @@ static int multipdp_init(void)
 		{ .id = 8, .ifname = "ttyEFS" },
 		{ .id = 5, .ifname = "ttyGPS" },
 		{ .id = 6, .ifname = "ttyXTRA" },
-		{ .id = 9, .ifname = "ttyCIQ1" },
-		{ .id = 27, .ifname = "ttyCIQ0" },		
-		{ .id = 29, .ifname = "ttyCPLOG" },				
+			{ .id = 29, .ifname = "ttyCPLOG" },				
 	};
 
 	/* create serial device for Circuit Switched Data */

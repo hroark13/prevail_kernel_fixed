@@ -1,7 +1,6 @@
 #
 # Makefile for the linux ext4-filesystem routines.
 #
-
 obj-$(CONFIG_EXT4_FS) += ext4.o
 
 ext4-y	:= balloc.o bitmap.o dir.o file.o fsync.o ialloc.o inode.o \
