@@ -8,7 +8,6 @@
 #include <asm/unistd.h>
 #include <asm/errno.h>
 #include <asm/uaccess.h>
-#include <linux/device.h>
 
 #include "param.h"
 //open #include <samsung_flash.h>
@@ -22,23 +21,6 @@
 #define NAND_PAGE_PER_UNIT		64
 #define NAND_SECTOR_PER_PAGE	8
 #define NAND_PAGE_SIZE 0x1000 //open
-
-#if defined(CONFIG_MACH_GIO)
-#define CAL_PARAM // sensor calibration value
-#endif
-
-#ifdef CAL_PARAM
-#define DATE_SIZE 13
-#define ACCL_OFFSET_SIZE 25
-
-extern struct device *kr3dm_dev_t;
-
-typedef struct _cal_param {	
-	char result;
-	char date[DATE_SIZE];	
-	char acc_offset[ACCL_OFFSET_SIZE];
-} CAL_RESULT_PARAM;
-#endif
 
 // must be same as bootable/bootloader/lk/app/aboot/common.h
 /* PARAM STRUCTURE */
@@ -60,12 +42,6 @@ typedef struct _param {
 	unsigned int first_boot_done; //rooting information
 	unsigned int custom_download_cnt;
 	char current_binary[30];
-
-#ifdef CAL_PARAM
-	char result;
-	char date[DATE_SIZE];	
-	char acc_offset[ACCL_OFFSET_SIZE];
-#endif
 } PARAM;
 
 //open FSRPartI pstPartI;
@@ -456,282 +432,6 @@ int _get_ram_dump_level(void)
 }
 #endif
 
-#ifdef CAL_PARAM
-static int cal_result_param_read(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	int err;
-	PARAM param;
-	
-	memset(mBuf, 0xff, NAND_PAGE_SIZE);
-
-	// read first page from param block
-	err = samsung_bml_read(get_param_start_unit() * NAND_PAGE_PER_UNIT * NAND_SECTOR_PER_PAGE, NAND_SECTOR_PER_PAGE, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML READ FAIL!\n");
-		return err;
-	}
-	
-	memcpy(&param, mBuf, sizeof(PARAM));
-	printk("ACC CAL PARAM result : %c\n", param.result);
-	printk("ACC CAL PARAM date : %s\n", param.date);	
-
-	return sprintf(buf, "%c%s\n", param.result, param.date);
-}
- 
-static int cal_result_param_write(struct device *dev, struct device_attribute *attr, const char *buffer, size_t size)
-{	
-	int err;	
-	char *buf;
-	unsigned int nByteRet = 0;
-	PARAM param;	
-	FSRChangePA stChangePA;
-	
-	printk("[%s] size = %d\n", __func__, size);
-	printk("[%s] buffer = %s\n", __func__, buffer);
-
-	if (size < 1)
-		return -EINVAL;
-
-	if(size > (DATE_SIZE+1)){
-		printk(KERN_ERR "[%s] size of written buffer is bigger than PARAM structure\n", __func__);
-		return -EFAULT;
-	}
-	
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-	{
-		printk(KERN_ERR "[%s] Memory Allocation Failed.\n", __func__);
-		return -ENOMEM;
-	}
-
-#if 0
-	if ((err = copy_from_user(buf, buffer, size))){
-		printk(KERN_ERR "[%s] Failed from copy user data. err = %d\n", __func__, err);
-		kfree(buf);
-		return -EFAULT;
-	}	
-#endif
-	memcpy(buf, buffer, size);
-	
-	printk("[%s] new result.result = %c\n", __func__, ((CAL_RESULT_PARAM*)buf)->result);
-	printk("[%s] new result.date = %s\n", __func__, ((CAL_RESULT_PARAM*)buf)->date);
-
-	// initialize buffer
-	memset(mBuf, 0xff, NAND_PAGE_SIZE);	
-
-#if 0	// for format 2nd unit of param part	
-	stChangePA.nPartID  = PARAM_nID;
-	stChangePA.nNewAttr = FSR_BML_PI_ATTR_RW;
-	if (FSR_BML_IOCtl(0, FSR_BML_IOCTL_CHANGE_PART_ATTR , (UINT8 *) &stChangePA, sizeof(stChangePA), NULL, 0, &nByteRet) != FSR_BML_SUCCESS) {
-		kfree(buf);
-		return FS_DEVICE_FAIL;
-	}
-
-	err = samsung_bml_erase(get_param_start_unit(), 1);
-	if(err) {
-		printk("PARAMERTER BML ERASE FAIL!\n");		
-		kfree(buf);
-		return err;
-	}
-#endif
-	
-	// read first page of cal param block
-	err = samsung_bml_read(get_param_start_unit() * NAND_PAGE_PER_UNIT * NAND_SECTOR_PER_PAGE, NAND_SECTOR_PER_PAGE, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML READ FAIL!\n");
-		kfree(buf);
-		return err;
-	}
-
-	memcpy(&param, mBuf, sizeof(PARAM));
-	// copy user data to cal result		
-	memcpy(&param.result, &((CAL_RESULT_PARAM*)buf)->result, sizeof(char));	
-	memcpy(&param.date, ((CAL_RESULT_PARAM*)buf)->date, DATE_SIZE);
-	memcpy(mBuf, &param, sizeof(PARAM));
-
-	stChangePA.nPartID  = PARAM_nID;
-	stChangePA.nNewAttr = FSR_BML_PI_ATTR_RW;
-	if (FSR_BML_IOCtl(0, FSR_BML_IOCTL_CHANGE_PART_ATTR , (UINT8 *) &stChangePA, sizeof(stChangePA), NULL, 0, &nByteRet) != FSR_BML_SUCCESS) {
-		kfree(buf);
-		return FS_DEVICE_FAIL;
-	}
-
-	err = samsung_bml_erase(get_param_start_unit(), 1);
-	if(err) {
-		printk("PARAMERTER BML ERASE FAIL!\n");		
-		kfree(buf);
-		return err;
-	}
-
-	// write back to chagned cal result
-	err = samsung_bml_write(get_param_start_unit() * NAND_PAGE_PER_UNIT, 1, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML WRITE FAIL!\n");		
-		kfree(buf);
-		return err;
-	}
-
-	stChangePA.nNewAttr = FSR_BML_PI_ATTR_RO;
-	if (FSR_BML_IOCtl(0, FSR_BML_IOCTL_CHANGE_PART_ATTR , (UINT8 *) &stChangePA, sizeof(stChangePA), NULL, 0, &nByteRet) != FSR_BML_SUCCESS) {
-		kfree(buf);
-		return FS_DEVICE_FAIL;
-	}
-	
-	kfree(buf);
-	
-	return size;
-}
-
-static int cal_check(const char *buf, size_t size)
-{
-	int i=2;
-	printk("[%s] buf = %s\n", __func__, buf);
-	while(i < size)
-	{
-		//printk("%d line buf : %c, Zero : %c\n", i, buf[i], '0'); 
-		if(buf[i] != '0')
-		{
-			return 1;
-		}
-		i++;
-		if( (i == 6) || (i == 13) ) i=i+3;
-	}
-	return 0;
-}
-
-static int cal_offset_param_read(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	int err, result;
-	PARAM param;
-	
-	memset(mBuf, 0xff, NAND_PAGE_SIZE);
-
-	// read first page from param block
-	err = samsung_bml_read(get_param_start_unit() * NAND_PAGE_PER_UNIT * NAND_SECTOR_PER_PAGE, NAND_SECTOR_PER_PAGE, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML READ FAIL!\n");
-		return err;
-	}
-	
-	memcpy(&param, mBuf, sizeof(PARAM));	
-	//printk("ACC CAL PARAM offset : %s\n", cal_result.acc_offset);	
-	result = cal_check(param.acc_offset, 19);
-	//printk("[%s] cal_result = %d\n", __func__, result);
-
-	if(!result) return sprintf(buf, "%d\n", 1);
-	return sprintf(buf, "%s\n", param.acc_offset);
-}
- 
-static int cal_offset_param_write(struct device *dev, struct device_attribute *attr, const char *buffer, size_t size)
-{	
-	int err, cal_result=0;	
-	char *buf;
-	unsigned int nByteRet = 0;
-	PARAM param;	
-	FSRChangePA stChangePA;
-	
-	printk("[%s] size = %d\n", __func__, size);
-	printk("[%s] buffer = %s\n", __func__, buffer);
-
-	if (size < 1)
-	{
-		return -EINVAL;
-	}
-	else if(size > ACCL_OFFSET_SIZE)
-	{
-		printk(KERN_ERR "[%s] size of written buffer is bigger than PARAM structure\n", __func__);
-		return -EFAULT;
-	}
-	else
-	{
-		cal_result=cal_check(buffer, size);
-		//printk("[%s] cal_result = %d\n", __func__, cal_result);
-	}
-	
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-	{
-		printk(KERN_ERR "[%s] Memory Allocation Failed.\n", __func__);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return -ENOMEM;
-	}
-
-#if 0
-	if ((err = copy_from_user(buf, buffer, size))){
-		printk(KERN_ERR "[%s] Failed from copy user data. err = %d\n", __func__, err);
-		kfree(buf);
-		return -EFAULT;
-	}	
-#endif
-	memcpy(buf, buffer, size);
-		
-	printk("[%s] new offset = %s\n", __func__, buf);
-
-	// initialize buffer
-	memset(mBuf, 0xff, NAND_PAGE_SIZE);	
-	
-	// read first page of cal param block
-	err = samsung_bml_read(get_param_start_unit() * NAND_PAGE_PER_UNIT * NAND_SECTOR_PER_PAGE, NAND_SECTOR_PER_PAGE, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML READ FAIL!\n");
-		kfree(buf);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return err;
-	}
-
-	memcpy(&param, mBuf, sizeof(PARAM));
-	// copy user data to cal result			
-	memcpy(&param.acc_offset, buf, ACCL_OFFSET_SIZE);
-	memcpy(mBuf, &param, sizeof(PARAM));
-
-	stChangePA.nPartID  = PARAM_nID;
-	stChangePA.nNewAttr = FSR_BML_PI_ATTR_RW;
-	if (FSR_BML_IOCtl(0, FSR_BML_IOCTL_CHANGE_PART_ATTR , (UINT8 *) &stChangePA, sizeof(stChangePA), NULL, 0, &nByteRet) != FSR_BML_SUCCESS) {
-		kfree(buf);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return FS_DEVICE_FAIL;
-	}
-
-	err = samsung_bml_erase(get_param_start_unit(), 1);
-	if(err) {
-		printk("PARAMERTER BML ERASE FAIL!\n");		
-		kfree(buf);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return err;
-	}
-
-	// write back to chagned cal result
-	err = samsung_bml_write(get_param_start_unit() * NAND_PAGE_PER_UNIT, 1, mBuf, NULL);
-	if(err) {
-		printk("PARAMERTER BML WRITE FAIL!\n");		
-		kfree(buf);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return err;
-	}
-
-	stChangePA.nNewAttr = FSR_BML_PI_ATTR_RO;
-	if (FSR_BML_IOCtl(0, FSR_BML_IOCTL_CHANGE_PART_ATTR , (UINT8 *) &stChangePA, sizeof(stChangePA), NULL, 0, &nByteRet) != FSR_BML_SUCCESS) {
-		kfree(buf);
-		if(cal_result)	sprintf(buffer,"%d\n", 1);
-		return FS_DEVICE_FAIL;
-	}
-	
-	kfree(buf);
-	if(!cal_result) 
-	{
-		sprintf(buffer,"%d\n", 0);
-	}
-	else 
-	{
-		sprintf(buffer, "%s\n", param.acc_offset);
-	}
-	return size;
-}
-
-static DEVICE_ATTR(cal_result, 0644, cal_result_param_read, cal_result_param_write);
-static DEVICE_ATTR(cal_offset, 0644, cal_offset_param_read, cal_offset_param_write);
-#endif
-
 static int __init param_init(void)
 {
  //open 	struct proc_dir_entry *ent, *ent2;
@@ -766,13 +466,6 @@ static int __init param_init(void)
 	smem_vendor1->ram_dump_level = ram_dump_level;
 #endif	
 
-#ifdef CAL_PARAM
-	if (device_create_file(kr3dm_dev_t, &dev_attr_cal_result) < 0)
-		printk("Failed to create device file(%s)!\n", dev_attr_cal_result.attr.name);	
-		
-	if (device_create_file(kr3dm_dev_t, &dev_attr_cal_offset) < 0)
-		printk("Failed to create device file(%s)!\n", dev_attr_cal_offset.attr.name);	
-#endif
 	
 	return 0;
 }

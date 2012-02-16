@@ -10,4 +10,10 @@ config DPRAM
        default y
        ---help---
 		Include this for using smem as dpram for communication between modem and appl.
+config DPRAM_WHITELIST
+       bool "Using dpram to send whitelist port infos"
+       default y
+       ---help---
+		Include this for using whitelist.
+
 endmenu
