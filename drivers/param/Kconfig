@@ -1,0 +1,18 @@
+menu "Samsung Param support"
+menuconfig ENABLE_MSM_PARAM
+	tristate "Samsung Paramter Block system"
+	depends on ARCH_MSM7X27
+	default	n
+	help
+	  Samsung Android Phone - Parameter control driver
+	  samsung_flash.o
+
+menuconfig MSM_PARAM
+	tristate "Samsung Paramter Block system"
+	depends on ARCH_MSM7X27
+	default	m
+	help
+	  Samsung Android Phone - Parameter control driver
+	  samsung_flash.o
+endmenu
+
