@@ -501,6 +501,7 @@ dhdsdio_set_siaddr_window(dhd_bus_t *bus, uint32 address)
 	return err;
 }
 
+static int g_sdioerr = 0;
 
 /* Turn backplane clock on or off */
 static int
@@ -531,7 +532,12 @@ dhdsdio_htclk(dhd_bus_t *bus, bool on, bool pendok)
 
 		bcmsdh_cfg_write(sdh, SDIO_FUNC_1, SBSDIO_FUNC1_CHIPCLKCSR, clkreq, &err);
 		if (err) {
-			DHD_ERROR(("%s: HT Avail request error1: %d\n", __FUNCTION__, err));
+			DHD_ERROR(("%s: HT Avail request error: %d\n", __FUNCTION__, err));
+			printk("[%s] : htclk error [%d] \r\n" , __func__ , g_sdioerr++);
+			if(g_sdioerr > 3) {
+				bus->dhd->busstate = DHD_BUS_DOWN;
+				g_sdioerr = 0;
+			}
 			return BCME_ERROR;
 		}
 
@@ -580,6 +586,11 @@ dhdsdio_htclk(dhd_bus_t *bus, bool on, bool pendok)
 		}
 		if (err) {
 			DHD_ERROR(("%s: HT Avail request error: %d\n", __FUNCTION__, err));
+			printk("[%s] : htclk error [%d] \r\n" , __func__ , g_sdioerr++);
+			if(g_sdioerr > 3) {
+				bus->dhd->busstate = DHD_BUS_DOWN;
+				g_sdioerr = 0;
+			}
 			return BCME_ERROR;
 		}
 		if (!SBSDIO_CLKAV(clkctl, bus->alp_only)) {
@@ -624,6 +635,11 @@ dhdsdio_htclk(dhd_bus_t *bus, bool on, bool pendok)
 		if (err) {
 			DHD_ERROR(("%s: Failed access turning clock off: %d\n",
 			           __FUNCTION__, err));
+			printk("[%s] : htclk error3333  [%d] \r\n" , __func__ , g_sdioerr++);
+			if(g_sdioerr > 3) {
+				bus->dhd->busstate = DHD_BUS_DOWN;
+				g_sdioerr = 0;
+			}
 			return BCME_ERROR;
 		}
 	}
@@ -1394,7 +1410,7 @@ dhd_bus_rxctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 		int retries = 0;
 		R_SDREG(intstatus, &bus->regs->intstatus, retries);
 		DHD_ERROR(("%s: resumed on timeout, INT=0x%X\n", __FUNCTION__, intstatus));
-#ifdef DHD_DEBUG
+#if 0 // to avoid kernel panic from OOB interrupts timeout //def DHD_DEBUG
 		dhd_os_sdlock(bus->dhd);
 		dhdsdio_checkdied(bus, NULL, 0);
 		dhd_os_sdunlock(bus->dhd);
@@ -1866,12 +1882,14 @@ dhdsdio_checkdied(dhd_bus_t *bus, uint8 *data, uint size)
 		DHD_ERROR(("%s: %s\n", __FUNCTION__, strbuf.origbuf));
 	}
 
+#if 0 // remove only debugging purpose codes
 #ifdef DHD_DEBUG
 	if (sdpcm_shared.flags & SDPCM_SHARED_TRAP) {
 		/* Mem dump to a file on device */
 		dhdsdio_mem_dump(bus);
 	}
 #endif /* DHD_DEBUG */
+#endif
 
 done:
 	if (mbuffer)
@@ -2743,6 +2761,8 @@ dhd_bus_stop(struct dhd_bus *bus, bool enforce_mutex)
 
 	BUS_WAKE(bus);
 
+	/* Change our idea of bus state */
+	bus->dhd->busstate = DHD_BUS_DOWN;
 
 	/* Enable clock for device interrupts */
 	dhdsdio_clkctl(bus, CLK_AVAIL, FALSE);
@@ -2762,8 +2782,6 @@ dhd_bus_stop(struct dhd_bus *bus, bool enforce_mutex)
 		DHD_ERROR(("%s: Failed to force clock for F2: err %d\n", __FUNCTION__, err));
 	}
 
-	/* Change our idea of bus state */
-	bus->dhd->busstate = DHD_BUS_DOWN;
 	/* Turn off the bus (F2), free any pending packets */
 	DHD_INTR(("%s: disable SDIO interrupts\n", __FUNCTION__));
 	bcmsdh_intr_disable(bus->sdh);

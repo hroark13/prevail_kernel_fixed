@@ -829,8 +829,9 @@ sdioh_request_byte(sdioh_info_t *sd, uint rw, uint func, uint regaddr, uint8 *by
 	}
 
 	if (err_ret) {
-		sd_err(("bcmsdh_sdmmc: Failed to %s byte F%d:@0x%05x=%02x, Err: %d\n",
-		                        rw ? "Write" : "Read", func, regaddr, *byte, err_ret));
+		/* sd_err(("bcmsdh_sdmmc: Failed to %s byte F%d:@0x%05x=%02x, Err: %d\n",
+		                        rw ? "Write" : "Read", func, regaddr, *byte, err_ret)); */
+		sd_err("bcmsdh_sdmmc: Failed \n");
 	}
 
 	return ((err_ret == 0) ? SDIOH_API_RC_SUCCESS : SDIOH_API_RC_FAIL);
@@ -877,7 +878,9 @@ sdioh_request_word(sdioh_info_t *sd, uint cmd_type, uint rw, uint func, uint add
 	sdio_release_host(gInstance->func[func]);
 
 	if (err_ret) {
-		sd_err(("%s : Failed to %d word, Err: 0x%08x \n",__FUNCTION__, rw ,err_ret));
+		/*sd_err(("bcmsdh_sdmmc: Failed to %s word, Err: 0x%08x",
+		                        rw ? "Write" : "Read", err_ret));*/
+		  sd_err("bcmsdh_sdmmc: Failed \n");
 	}
 
 	return ((err_ret == 0) ? SDIOH_API_RC_SUCCESS : SDIOH_API_RC_FAIL);

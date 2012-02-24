@@ -2287,15 +2287,6 @@ dhd_bus_start(dhd_pub_t *dhdp)
 		DHD_ERROR(("%s, dhd_bus_init failed %d\n", __FUNCTION__, ret));
 		return ret;
 	}
-
-	/* If bus is not ready, can't come up */
-	if (dhd->pub.busstate != DHD_BUS_DATA) {
-		dhd->wd_timer_valid = FALSE;
-		del_timer_sync(&dhd->timer);
-		DHD_ERROR(("%s failed bus is not ready\n", __FUNCTION__));
-		return -ENODEV;
-	}
-
 #if defined(OOB_INTR_ONLY)
 	/* Host registration for OOB interrupt */
 	if (bcmsdh_register_oob_intr(dhdp)) {
@@ -2311,6 +2302,13 @@ dhd_bus_start(dhd_pub_t *dhdp)
 	dhd_enable_oob_intr(dhd->pub.bus, TRUE);
 #endif /* defined(OOB_INTR_ONLY) */
 
+	/* If bus is not ready, can't come up */
+	if (dhd->pub.busstate != DHD_BUS_DATA) {
+		dhd->wd_timer_valid = FALSE;
+		del_timer_sync(&dhd->timer);
+		DHD_ERROR(("%s failed bus is not ready\n", __FUNCTION__));
+		return -ENODEV;
+	}
 
 #ifdef READ_MACADDR
 	if (dhd_read_macaddr(dhd) < 0)
@@ -2340,6 +2338,7 @@ dhd_bus_start(dhd_pub_t *dhdp)
 	setbit(dhdp->eventmask, WLC_E_TXFAIL);
 	setbit(dhdp->eventmask, WLC_E_JOIN_START);
 	setbit(dhdp->eventmask, WLC_E_SCAN_COMPLETE);
+	setbit(dhdp->eventmask, WLC_E_DEAUTH);
 	setbit(dhdp->eventmask, WLC_E_RELOAD);
 #ifdef PNO_SUPPORT
 	setbit(dhdp->eventmask, WLC_E_PFN_NET_FOUND);

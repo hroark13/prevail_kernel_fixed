@@ -81,8 +81,10 @@
 #include <linux/gpio.h>
 
 #include <mach/hardware.h>
+#include <linux/wakelock.h>
 
 #define DET_CHECK_TIME_MS	200 // 200ms
+#define WAKE_LOCK_TIME		(HZ * 3)	/* 3 sec */
 
 /* PROJECT SPECIFICATION START
 */
@@ -207,6 +209,8 @@ struct h2w_info {
 	int btn_irq_available;
 
 	int pressed_btn;
+
+	struct wake_lock det_wake_lock;
 
 	unsigned int use_irq : 1;
 };
@@ -530,6 +534,8 @@ static irqreturn_t detect_irq_handler(int irq, void *dev_id)
 	
 	// ESCAPE Detection issue fix
 
+	wake_lock_timeout(&hi->det_wake_lock, WAKE_LOCK_TIME);
+
 	set_irq_type(hi->irq_btn, IRQF_TRIGGER_RISING);	  // button detect high
 	while ( time_left_ms > 0)
 	{
@@ -799,6 +805,8 @@ static int h2w_probe(struct platform_device *pdev)
 		goto err_get_h2w_detect_irq_num_failed;
 	}
 
+	wake_lock_init(&hi->det_wake_lock, WAKE_LOCK_SUSPEND, "sec_jack_det");
+
 	hrtimer_init(&hi->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hi->timer.function = detect_event_timer_func;
 #ifndef FEATURE_MAX8899_PMIC_SENDEND	
@@ -951,6 +959,7 @@ static int h2w_remove(struct platform_device *pdev)
 #ifdef GPIO_POPUP_SW_EN
 	gpio_free(GPIO_POPUP_SW_EN);
 #endif
+	wake_lock_destroy(&hi->det_wake_lock);
 	gpio_free(GPIO_EAR_LDO_EN);
 	gpio_free(GPIO_DETECT_HEADSET);
 	free_irq(hi->irq, 0);

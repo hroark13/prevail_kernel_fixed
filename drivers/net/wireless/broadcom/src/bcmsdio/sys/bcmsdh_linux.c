@@ -195,7 +195,7 @@ int bcmsdh_probe(struct device *dev)
 	irq_flags = \
 		IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL | IORESOURCE_IRQ_SHAREABLE;
 #else
-	 irq_flags = IRQF_TRIGGER_RISING;
+	irq_flags = IRQF_TRIGGER_RISING;
 #endif /* HW_OOB */
 	irq = dhd_customer_oob_irq_map(&irq_flags);
 	if  (irq < 0) {
@@ -632,15 +632,12 @@ int bcmsdh_register_oob_intr(void * dhdp)
 	if (!sdhcinfo->oob_irq_registered) {
 		SDLX_MSG(("%s IRQ=%d Type=%X \n", __FUNCTION__, \
 				(int)sdhcinfo->oob_irq, (int)sdhcinfo->oob_flags));
-		/* Refer to customer Host IRQ docs about proper irqflags definition */
-    		error = request_irq(sdhcinfo->oob_irq, wlan_oob_irq,
-        		IRQF_TRIGGER_RISING, "bcmsdh_sdmmc", NULL);//SecFeature.Chief
+	/* Refer to customer Host IRQ docs about proper irqflags definition */
+    	error = request_threaded_irq(sdhcinfo->oob_irq, NULL, wlan_oob_irq,
+        	IRQF_TRIGGER_RISING, "bcmsdh_sdmmc", NULL);
 
-		if (error)
-		{
-			printk (KERN_ERR "Unable to request wlan_oob_irq[%d]\n", sdhcinfo->oob_irq);
-			return -ENODEV;
-		}
+	if (error)
+		return -ENODEV;
 
 		set_irq_wake(sdhcinfo->oob_irq, 1);
 

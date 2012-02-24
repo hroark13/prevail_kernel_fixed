@@ -113,7 +113,7 @@
 #define READ_FROM_DPRAM(dest, src, size) \
 	_memcpy(dest, (void *)(SmemBase + src), size)
 
-#define NUM_PDP_CONTEXT			8
+#define NUM_PDP_CONTEXT			6
 
 #ifdef _ENABLE_ERROR_DEVICE
 #define DPRAM_ERR_MSG_LEN			65
@@ -176,7 +176,7 @@ struct pdp_info {
 	union {
 		/* Virtual serial interface */
 		struct {
-			struct tty_driver	tty_driver[NUM_PDP_CONTEXT];	// CSD, CDMA, TRFB
+			struct tty_driver	tty_driver[NUM_PDP_CONTEXT];	// CSD, CDMA
 			int			refcount;
 			struct tty_struct	*tty_table[1];
 			struct ktermios		*termios[1];
@@ -583,6 +583,7 @@ static int dpram_write(dpram_device_t *device,
 {
 	int retval = 0;
 	int size = 0;
+	int ret = 0;
 
 	u16 head, tail;
 	u16 irq_mask = 0;

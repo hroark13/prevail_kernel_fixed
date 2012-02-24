@@ -393,6 +393,7 @@ printk(KERN_INFO"%s\n", __FUNCTION__);
 
 
 // iamaj ec27 [[
+/*
     if(++dataPo == KR3DM_REF) dataPo =0;
     kr3dmData[KR3DM_X][dataPo] = acc->x;
     kr3dmData[KR3DM_Y][dataPo] = acc->y;
@@ -410,6 +411,7 @@ printk(KERN_INFO"%s\n", __FUNCTION__);
 		else acc->y = kr3dmData[KR3DM_Y][KR3DM_REF];
 	if(	KisChangeZ) kr3dmData[KR3DM_Z][KR3DM_REF] = acc->z;
 		else acc->z = kr3dmData[KR3DM_Z][KR3DM_REF];
+*/
 // ]]
 
 #if 0
@@ -535,6 +537,7 @@ printk(KERN_INFO"%s\n", __FUNCTION__);
 	
 	
 // iamaj ec27 [[
+/*
     if(++dataPo == KR3DM_REF) dataPo =0;
     kr3dmData[KR3DM_X][dataPo] = acc->x;
     kr3dmData[KR3DM_Y][dataPo] = acc->y;
@@ -553,7 +556,7 @@ printk(KERN_INFO"%s\n", __FUNCTION__);
 	if(	KisChangeZ) kr3dmData[KR3DM_Z][KR3DM_REF] = acc->z;
 		else acc->z = kr3dmData[KR3DM_Z][KR3DM_REF];
 // ]]
-
+*/
 #if 0
 	printk("[KR3DM] x = %d  /  y =  %d  /  z = %d converted data \n", acc->x, acc->y, acc->z ); //kimhyuns_temp
 #endif	
