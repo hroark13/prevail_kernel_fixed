@@ -453,7 +453,15 @@ void drm_vm_close_locked(struct vm_area_struct *vma)
 	}
 }
 
-void drm_vm_close_locked(struct vm_area_struct *vma)
+/**
+ * \c close method for all virtual memory types.
+ *
+ * \param vma virtual memory area.
+ *
+ * Search the \p vma private data entry in drm_device::vmalist, unlink it, and
+ * free it.
+ */
+static void drm_vm_close(struct vm_area_struct *vma)
 {
 	struct drm_file *priv = vma->vm_file->private_data;
 	struct drm_device *dev = priv->minor->dev;
