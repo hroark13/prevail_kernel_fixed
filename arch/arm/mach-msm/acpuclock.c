@@ -229,37 +229,29 @@ static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_1200[] = {
 
 /* 7x27 normal with GSM capable modem - PLL0 and PLL1 swapped and pll2 @ 800 */
 static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_800[] = {
-	{ 1, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
-	{ 1, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
+	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
+	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
 	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 3,  61440 },
-	{ 1, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  61440 },
+	{ 0, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  61440 },
 	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
-	{ 1, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 122880 },
+	{ 0, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 122880 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
 	{ 1, 800000, ACPU_PLL_2, 2, 0, 200000, 3, 7, 122880 },
-	{ 1, 806400, ACPU_PLL_2, 2, 2, 160000, 2, 7, 160000 }, 
-	{ 1, 825600, ACPU_PLL_0, 4, 0, 206400, 3, 7, 122880 },
-	{ 1, 844800, ACPU_PLL_0, 4, 0, 211200, 3, 7, 122880 },
-	{ 1, 864000, ACPU_PLL_0, 4, 0, 216000, 3, 7, 122880 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
 };
 
 /* 7x27 normal with CDMA-only modem - PLL0 and PLL1 swapped and pll2 @ 800 */
 static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_800[] = {
-	{ 1, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 24576 },
+	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 24576 },
 	{ 1,  98304, ACPU_PLL_1, 1, 1,  98304, 0, 3,  49152 },
-	{ 1, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  49152 },
+	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  49152 },
 	{ 1, 196608, ACPU_PLL_1, 1, 0,  65536, 2, 4,  98304 },
-	{ 1, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  98304 },
+	{ 0, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  98304 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 120000 },
-	{ 1, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 120000 },
+	{ 0, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 120000 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 120000 },
 	{ 1, 800000, ACPU_PLL_2, 2, 0, 200000, 3, 7, 120000 },
-	{ 1, 806400, ACPU_PLL_2, 2, 2, 160000, 2, 7, 160000 }, 
-	{ 1, 825600, ACPU_PLL_0, 4, 0, 206400, 3, 7, 122880 },
-	{ 1, 844800, ACPU_PLL_0, 4, 0, 211200, 3, 7, 122880 },
-	{ 1, 864000, ACPU_PLL_0, 4, 0, 216000, 3, 7, 122880 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
 };
 
@@ -431,7 +423,7 @@ static int acpuclk_set_vdd_level(int vdd)
 /* Set proper dividers for the given clock speed. */
 static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 {
-	uint32_t reg_clkctl, reg_clksel, clk_div, src_sel, a11_div;
+	uint32_t reg_clkctl, reg_clksel, clk_div, src_sel;
 
 	reg_clksel = readl(A11S_CLK_SEL_ADDR);
 
@@ -439,12 +431,6 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 	clk_div = (reg_clksel >> 1) & 0x03;
 	/* CLK_SEL_SRC1NO */
 	src_sel = reg_clksel & 1;
-	  a11_div=hunt_s->a11clk_src_div;
-     if(hunt_s->a11clk_khz>600000) {
-     a11_div=0;
-     writel(hunt_s->a11clk_khz/19200, MSM_CLK_CTL_BASE+0x33C);
-     udelay(50);
-}
 
 	/*
 	 * If the new clock divider is higher than the previous, then
