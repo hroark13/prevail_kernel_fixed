@@ -3,7 +3,7 @@
  * MSM architecture clock driver
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2007-2010, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2007-2011, Code Aurora Forum. All rights reserved.
  * Author: San Mehat <san@android.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  *
  */
-
-#define OVERCLOCK_AHB
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -205,100 +203,39 @@ static struct clkctl_acpu_speed pll0_196_pll1_960_pll2_1200[] = {
 static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
 	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
-	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 0,  61440 },
+	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 3,  61440 },
 	{ 0, 200000, ACPU_PLL_2, 2, 5,  66667, 2, 4,  61440 },
-	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 2,  61440 },
-	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 3, 122880 },
+	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
+	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
 	{ 0, 400000, ACPU_PLL_2, 2, 2, 133333, 2, 5, 122880 },
-	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 5, 122880 },
+	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
 	{ 1, 600000, ACPU_PLL_2, 2, 1, 200000, 2, 7, 122880 },
-#ifndef OVERCLOCK_AHB
-/* Conservative AHB overclocking */
-	{ 1, 652800, ACPU_PLL_0, 4, 0, 217600, 2, 7, 200000 },
-	{ 1, 672000, ACPU_PLL_0, 4, 0, 224000, 2, 7, 200000 },
-	{ 1, 691200, ACPU_PLL_0, 4, 0, 230400, 2, 7, 200000 },
-	{ 1, 710400, ACPU_PLL_0, 4, 0, 236800, 2, 7, 200000 },
-	{ 1, 729600, ACPU_PLL_0, 4, 0, 243200, 2, 7, 200000 },
-	{ 1, 748800, ACPU_PLL_0, 4, 0, 249600, 2, 7, 200000 },
-	{ 1, 768000, ACPU_PLL_0, 4, 0, 256000, 2, 7, 200000 },
-	{ 1, 787200, ACPU_PLL_0, 4, 0, 262400, 2, 7, 200000 },
-	{ 1, 806400, ACPU_PLL_0, 4, 0, 268800, 2, 7, 200000 },
-//	{ 1, 825600, ACPU_PLL_0, 4, 0, 275200, 2, 7, 200000 },
-//	{ 1, 844800, ACPU_PLL_0, 4, 0, 281600, 2, 7, 200000 },
-#else
-/* Agressive AHB overclocking */
-//	{ 1, 480000, ACPU_PLL_0, 4, 1, 240000, 1, 6, 200000 },
-//	{ 1, 600000, ACPU_PLL_2, 2, 1, 300000, 1, 7, 200000 },
-	{ 1, 480000, ACPU_PLL_0, 4, 1, 240000, 1, 6, 240000 },
-	{ 1, 600000, ACPU_PLL_2, 2, 1, 300000, 1, 7, 300000 },
-	{ 1, 652800, ACPU_PLL_0, 4, 0, 326400, 1, 7, 326400 },
-	{ 1, 672000, ACPU_PLL_0, 4, 0, 336000, 1, 7, 336000 },
-	{ 1, 691200, ACPU_PLL_0, 4, 0, 345600, 1, 7, 345600 },
-	{ 1, 710400, ACPU_PLL_0, 4, 0, 355200, 1, 7, 355200 },
-	{ 1, 729600, ACPU_PLL_0, 4, 0, 364800, 1, 7, 364800 },
-	{ 1, 748800, ACPU_PLL_0, 4, 0, 374400, 1, 7, 374400 },
-	{ 1, 768000, ACPU_PLL_0, 4, 0, 384000, 1, 7, 384600 },
-	{ 1, 787200, ACPU_PLL_0, 4, 0, 393600, 1, 7, 393600 },
-	{ 1, 806400, ACPU_PLL_0, 4, 0, 403200, 1, 7, 403200 },
-//	{ 1, 825600, ACPU_PLL_0, 4, 0, 412800, 1, 7, 200000 },
-//	{ 1, 844800, ACPU_PLL_0, 4, 0, 422400, 1, 7, 200000 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
-#endif
 };
 
 /* 7x27 normal with CDMA-only modem - PLL0 and PLL1 swapped */
 static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_1200[] = {
-	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
-	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
-	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 0,  61440 },
-	{ 0, 200000, ACPU_PLL_2, 2, 5,  66667, 2, 4,  61440 },
-	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 2,  61440 },
-	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 3, 122880 },
-	{ 0, 400000, ACPU_PLL_2, 2, 2, 133333, 2, 5, 122880 },
-	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 5, 122880 },
-	{ 1, 600000, ACPU_PLL_2, 2, 1, 200000, 2, 7, 122880 },
-#ifndef OVERCLOCK_AHB
-/* Conservative AHB overclocking */
-	{ 1, 652800, ACPU_PLL_0, 4, 0, 217600, 2, 7, 200000 },
-	{ 1, 672000, ACPU_PLL_0, 4, 0, 224000, 2, 7, 200000 },
-	{ 1, 691200, ACPU_PLL_0, 4, 0, 230400, 2, 7, 200000 },
-	{ 1, 710400, ACPU_PLL_0, 4, 0, 236800, 2, 7, 200000 },
-	{ 1, 729600, ACPU_PLL_0, 4, 0, 243200, 2, 7, 200000 },
-	{ 1, 748800, ACPU_PLL_0, 4, 0, 249600, 2, 7, 200000 },
-	{ 1, 768000, ACPU_PLL_0, 4, 0, 256000, 2, 7, 200000 },
-	{ 1, 787200, ACPU_PLL_0, 4, 0, 262400, 2, 7, 200000 },
-	{ 1, 806400, ACPU_PLL_0, 4, 0, 268800, 2, 7, 200000 },
-//	{ 1, 825600, ACPU_PLL_0, 4, 0, 275200, 2, 7, 200000 },
-//	{ 1, 844800, ACPU_PLL_0, 4, 0, 281600, 2, 7, 200000 },
-#else
-/* Agressive AHB overclocking */
-//	{ 1, 480000, ACPU_PLL_0, 4, 1, 240000, 1, 6, 200000 },
-//	{ 1, 600000, ACPU_PLL_2, 2, 1, 300000, 1, 7, 200000 },
-	{ 1, 480000, ACPU_PLL_0, 4, 1, 240000, 1, 6, 240000 },
-	{ 1, 600000, ACPU_PLL_2, 2, 1, 300000, 1, 7, 300000 },
-	{ 1, 652800, ACPU_PLL_0, 4, 0, 326400, 1, 7, 326400 },
-	{ 1, 672000, ACPU_PLL_0, 4, 0, 336000, 1, 7, 336000 },
-	{ 1, 691200, ACPU_PLL_0, 4, 0, 345600, 1, 7, 345600 },
-	{ 1, 710400, ACPU_PLL_0, 4, 0, 355200, 1, 7, 355200 },
-	{ 1, 729600, ACPU_PLL_0, 4, 0, 364800, 1, 7, 364800 },
-	{ 1, 748800, ACPU_PLL_0, 4, 0, 374400, 1, 7, 374400 },
-	{ 1, 768000, ACPU_PLL_0, 4, 0, 384000, 1, 7, 384600 },
-	{ 1, 787200, ACPU_PLL_0, 4, 0, 393600, 1, 7, 393600 },
-	{ 1, 806400, ACPU_PLL_0, 4, 0, 403200, 1, 7, 403200 },
-//	{ 1, 825600, ACPU_PLL_0, 4, 0, 412800, 1, 7, 200000 },
-//	{ 1, 844800, ACPU_PLL_0, 4, 0, 422400, 1, 7, 200000 },
+	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 24576 },
+	{ 1,  98304, ACPU_PLL_1, 1, 1,  98304, 0, 3,  49152 },
+	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  49152 },
+	{ 1, 196608, ACPU_PLL_1, 1, 0,  65536, 2, 4,  98304 },
+	{ 0, 200000, ACPU_PLL_2, 2, 5,  66667, 2, 4,  98304 },
+	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 120000 },
+	{ 0, 400000, ACPU_PLL_2, 2, 2, 133333, 2, 5, 120000 },
+	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 120000 },
+	{ 1, 600000, ACPU_PLL_2, 2, 1, 200000, 2, 7, 120000 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
-#endif
 };
+
 /* 7x27 normal with GSM capable modem - PLL0 and PLL1 swapped and pll2 @ 800 */
 static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_800[] = {
 	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
-	{ 1, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
+	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
 	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 3,  61440 },
-	{ 1, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  61440 },
+	{ 0, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  61440 },
 	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
-	{ 1, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 122880 },
+	{ 0, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 122880 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
 	{ 1, 800000, ACPU_PLL_2, 2, 0, 200000, 3, 7, 122880 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
@@ -308,24 +245,13 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_800[] = {
 static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_800[] = {
 	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 24576 },
 	{ 1,  98304, ACPU_PLL_1, 1, 1,  98304, 0, 3,  49152 },
-	{ 1, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  49152 },
+	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  49152 },
 	{ 1, 196608, ACPU_PLL_1, 1, 0,  65536, 2, 4,  98304 },
-	{ 1, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  98304 },
+	{ 0, 200000, ACPU_PLL_2, 2, 3,  66667, 2, 4,  98304 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 120000 },
-	{ 1, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 120000 },
+	{ 0, 400000, ACPU_PLL_2, 2, 1, 133333, 2, 5, 120000 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 120000 },
 	{ 1, 800000, ACPU_PLL_2, 2, 0, 200000, 3, 7, 120000 },
-	{ 1, 825600, ACPU_PLL_0, 4, 0, 312800, 1, 7, 120000 },
-	{ 1, 844800, ACPU_PLL_0, 4, 0, 322400, 1, 7, 120000 },
-        { 1, 864000, ACPU_PLL_0, 4, 0, 332000, 3, 7, 120000 },
-	{ 1, 888800, ACPU_PLL_0, 4, 0, 344400, 3, 7, 130000 },
-	{ 1, 900000, ACPU_PLL_0, 4, 0, 350000, 3, 7, 130000 },
-	{ 1, 925600, ACPU_PLL_0, 4, 0, 362800, 3, 7, 130000 },
-	{ 1, 946808, ACPU_PLL_0, 4, 0, 372440, 3, 7, 130000 },
-        { 0, 963300, ACPU_PLL_0, 4, 0, 482100, 3, 7, 170000 },
-	{ 0, 988800, ACPU_PLL_0, 4, 0, 472400, 3, 7, 210000 },
-	{ 0, 1000000, ACPU_PLL_0, 4, 0, 472400, 3, 7, 230000 },
-	
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
 };
 
@@ -421,6 +347,7 @@ static int pc_pll_request(unsigned id, unsigned on)
 			pll_control->pll[PLL_BASE + id].votes |= 2;
 			if (!pll_control->pll[PLL_BASE + id].on) {
 				writel(6, PLLn_MODE(id));
+				dsb();
 				udelay(50);
 				writel(7, PLLn_MODE(id));
 				pll_control->pll[PLL_BASE + id].on = 1;
@@ -481,6 +408,7 @@ static int acpuclk_set_vdd_level(int vdd)
 	       current_vdd, vdd);
 
 	writel((1 << 7) | (vdd << 3), A11S_VDD_SVS_PLEVEL_ADDR);
+	dsb();
 	udelay(drv_state.vdd_switch_time_us);
 	if ((readl(A11S_VDD_SVS_PLEVEL_ADDR) & 0x7) != vdd) {
 		pr_err("VDD set failed\n");
@@ -504,21 +432,6 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 	/* CLK_SEL_SRC1NO */
 	src_sel = reg_clksel & 1;
 
-	// Perform overclocking if requested
-	if(hunt_s->pll==0 && hunt_s->a11clk_khz>600000) {
-		// Change the speed of PLL0
-		writel(hunt_s->a11clk_khz/19200, PLLn_L_VAL(0));
-		udelay(50);
-	}
-
-#ifdef OVERCLOCK_AHB
-	// Pump the PLL2 up another 19200kHz (overclock stock 600MHz from 595.2MHz to 604.8MHz)
-	if(hunt_s->pll==2 && hunt_s->a11clk_khz==600000) {
-		writel(63, PLLn_L_VAL(2));
-		udelay(50);
-	}
-#endif
-
 	/*
 	 * If the new clock divider is higher than the previous, then
 	 * program the divider before switching the clock
@@ -528,7 +441,6 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 		reg_clksel |= (hunt_s->ahbclk_div << 1);
 		writel(reg_clksel, A11S_CLK_SEL_ADDR);
 	}
-
 
 	/* Program clock source and divider */
 	reg_clkctl = readl(A11S_CLK_CNTL_ADDR);
@@ -540,13 +452,6 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 	/* Program clock source selection */
 	reg_clksel ^= 1;
 	writel(reg_clksel, A11S_CLK_SEL_ADDR);
-
-	// Recover from overclocking
-	//if(hunt_s->pll==0 && hunt_s->a11clk_khz<=600000) {
-		// Restore the speed of PLL0
-	//	writel(50, PLLn_L_VAL(0));
-	//	udelay(50);
-	//}
 
 	/*
 	 * If the new clock divider is lower than the previous, then
@@ -690,6 +595,7 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 		drv_state.current_speed = cur_s;
 		/* Re-adjust lpj for the new clock speed. */
 		loops_per_jiffy = cur_s->lpj;
+		dsb();
 		udelay(drv_state.acpu_switch_time_us);
 	}
 

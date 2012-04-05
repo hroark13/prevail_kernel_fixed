@@ -522,6 +522,7 @@ static ssize_t show_scaling_governor(struct cpufreq_policy *policy, char *buf)
 }
 
 
+
 #if 1//PCAM
 int cpufreq_direct_set_policy(unsigned int cpu, const char *buf)
 {
@@ -573,6 +574,9 @@ int cpufreq_direct_set_policy(unsigned int cpu, const char *buf)
 }
 EXPORT_SYMBOL(cpufreq_direct_set_policy); 
 #endif//PCAM
+
+
+
 /**
  * store_scaling_governor - store policy for the specified CPU
  */
@@ -1278,28 +1282,12 @@ static int __cpufreq_remove_dev(struct sys_device *sys_dev)
 		cpufreq_driver->exit(data);
 	unlock_policy_rwsem_write(cpu);
 
-	cpufreq_debug_enable_ratelimit();
-
-#ifdef CONFIG_HOTPLUG_CPU
-	/* when the CPU which is the parent of the kobj is hotplugged
-	 * offline, check for siblings, and create cpufreq sysfs interface
-	 * and symlinks
-	 */
-	if (unlikely(cpumask_weight(data->cpus) > 1)) {
-		/* first sibling now owns the new sysfs dir */
-		cpumask_clear_cpu(cpu, data->cpus);
-		cpufreq_add_dev(get_cpu_sysdev(cpumask_first(data->cpus)));
-
-		/* finally remove our own symlink */
-		lock_policy_rwsem_write(cpu);
-		__cpufreq_remove_dev(sys_dev);
-	}
-#endif
-
 	free_cpumask_var(data->related_cpus);
 	free_cpumask_var(data->cpus);
 	kfree(data);
+	per_cpu(cpufreq_cpu_data, cpu) = NULL;
 
+	cpufreq_debug_enable_ratelimit();
 	return 0;
 }
 
